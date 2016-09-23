@@ -16,6 +16,8 @@ public:
     GLWidget(QWidget *parent);
     ~GLWidget();
     void printVersionInformation();
+    QSize minimumSizeHint() const Q_DECL_OVERRIDE;
+    QSize sizeHint() const Q_DECL_OVERRIDE;
     struct Vertex
     {
         Q_DECL_CONSTEXPR Vertex(const QVector3D &position, const QVector3D &color):
@@ -23,6 +25,7 @@ public:
         static Q_DECL_CONSTEXPR int positionOffset() { return offsetof(Vertex, m_position); }
         static Q_DECL_CONSTEXPR int colorOffset() { return offsetof(Vertex, m_color); }
         static Q_DECL_CONSTEXPR int stride() { return sizeof(Vertex); }
+
         QVector3D m_position;
         QVector3D m_color;
         static const int PositionTupleSize = 3;

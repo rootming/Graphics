@@ -4,9 +4,14 @@
 static const GLWidget::Vertex sg_vertexes[] = {
   GLWidget::Vertex( QVector3D( -0.75f,  -0.75f, 1.0f), QVector3D(1.0f, 0.0f, 0.0f) ),
   GLWidget::Vertex( QVector3D(0.75f, -0.75f, 1.0f), QVector3D(0.0f, 1.0f, 0.0f) ),
-  GLWidget::Vertex( QVector3D( 0.00f, 0.75f, 1.0f), QVector3D(0.0f, 0.0f, 1.0f) )
+  GLWidget::Vertex( QVector3D( -0.75f, 0.75f, 1.0f), QVector3D(0.0f, 0.0f, 1.0f) ),
+  GLWidget::Vertex( QVector3D( 0.75f, 0.75f, 1.0f), QVector3D(0.0f, 0.0f, 1.0f) )
 };
 
+GLuint indices[] = { // 注意索引从0开始!
+    0, 1, 2, // 第一个三角形
+    1, 2, 3  // 第二个三角形
+};
 
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent)
@@ -34,6 +39,7 @@ void GLWidget::initializeGL()
     QOpenGLShader vshader(QOpenGLShader::Vertex, this);
     QOpenGLShader fshader(QOpenGLShader::Fragment, this);
 
+
     if(!vshader.compileSourceFile(":/shader/vertex.vert")){
         qDebug()<< "Vertex Shader compile fail";
     }
@@ -45,31 +51,37 @@ void GLWidget::initializeGL()
 
     program.link();
     program.bind();
-    object.create();
-    object.bind();
 
     vbo.create();
     vbo.bind();
     vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
     vbo.allocate(sg_vertexes, sizeof(sg_vertexes));
 
+    object.create();
+    object.bind();
+
     program.enableAttributeArray(PROGRAM_VERTEX_ATTRIBUTE);
     program.enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
     program.setAttributeBuffer(PROGRAM_VERTEX_ATTRIBUTE, GL_FLOAT, Vertex::positionOffset(),  Vertex::PositionTupleSize,  Vertex::stride());
     program.setAttributeBuffer(PROGRAM_TEXCOORD_ATTRIBUTE, GL_FLOAT,  Vertex::colorOffset(),  Vertex::ColorTupleSize, Vertex::stride());;
-
-    object.release();
     vbo.release();
+    object.release();
     program.release();
 
 }
 
 void GLWidget::paintGL()
 {
+    GLuint EBO;
     glClear(GL_COLOR_BUFFER_BIT);
     program.bind();
     object.bind();
-    glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_vertexes) / sizeof(sg_vertexes[0]));
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    //glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_vertexes) / sizeof(sg_vertexes[0]));
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     object.release();
     program.release();
 }
@@ -81,8 +93,20 @@ void GLWidget::makeObject()
 
 }
 
+QSize GLWidget::minimumSizeHint() const
+{
+    return QSize(50, 50);
+}
+
+QSize GLWidget::sizeHint() const
+{
+    return QSize(500, 500);
+}
+
 void GLWidget::resizeGL(int w, int h)
 {
+    int side = qMin(w, h);
+    glViewport((w - side) / 2, (h - side) / 2, side, side);
     qDebug() << w << h << endl;
 }
 
